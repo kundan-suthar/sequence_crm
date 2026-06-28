@@ -1,9 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import type { RootState } from '@/lib/redux/store'
 
 interface User {
     id: string
     name: string
     email: string
+    roles: string[]
 }
 
 interface UserState {
@@ -43,3 +45,6 @@ export const userSlice = createSlice({
 
 export const { setUser, setAccessToken, clearUser } = userSlice.actions
 export default userSlice.reducer
+
+export const selectIsAdmin = (state: RootState): boolean =>
+    state.user.currentUser?.roles?.includes('admin') ?? false

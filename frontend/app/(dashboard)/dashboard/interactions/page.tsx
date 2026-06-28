@@ -479,7 +479,7 @@ function InteractionRow({ interaction, customerName, expanded, onToggle, onView,
 
                 {/* Actions */}
                 <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end gap-1  group-hover:opacity-100 transition-opacity">
                         <button
                             type="button"
                             aria-label={`View interaction ${interaction.title}`}

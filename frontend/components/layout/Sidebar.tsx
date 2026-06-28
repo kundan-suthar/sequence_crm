@@ -62,7 +62,7 @@ export default function Sidebar() {
             </nav>
 
             {/* Footer */}
-            <div className="px-3 py-4 border-t border-white/10">
+            {/* <div className="px-3 py-4 border-t border-white/10">
                 <Link
                     href="/help"
                     className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white transition-colors"
@@ -73,7 +73,7 @@ export default function Sidebar() {
                 <p className="mt-3 px-3 text-[11px] text-white/30">
                     © 2024 SequenceCRM v2.4.0
                 </p>
-            </div>
+            </div> */}
         </aside>
     )
 }

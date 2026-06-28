@@ -1,7 +1,8 @@
 'use client'
 
-import { Bell } from 'lucide-react'
+import { Bell, Menu } from 'lucide-react'
 import { usePathname } from 'next/navigation'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 const routeLabels: Record<string, string> = {
     '/dashboard': 'Dashboard',
@@ -23,11 +24,22 @@ function getBreadcrumb(pathname: string): { parent: string; current: string } {
 export default function Header() {
     const pathname = usePathname()
     const { parent, current } = getBreadcrumb(pathname)
+    const { open } = useSidebar()
 
     return (
         <header className="flex h-14 items-center justify-between border-b border-border bg-background px-6">
+            {/* Hamburger button — visible only on mobile */}
+            <button
+                type="button"
+                aria-label="Open navigation"
+                onClick={open}
+                className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+                <Menu className="h-5 w-5" aria-hidden="true" />
+            </button>
+
             {/* Breadcrumb + title */}
-            <div>
+            <div className="flex-1 lg:flex-none">
                 {parent && (
                     <p className="text-xs text-muted-foreground uppercase tracking-widest mb-0.5">
                         {parent} › {current}

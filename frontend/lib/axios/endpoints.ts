@@ -24,6 +24,7 @@ export const ENDPOINTS = {
         CREATE: '/interactions',
         DETAIL: (id: number) => `/interactions/${id}`,
         UPDATE: (id: number) => `/interactions/${id}`,
+        DELETE: (id: number) => `/interactions/${id}`,
     },
     DASHBOARD: {
         ANALYTICS: '/dashboard/analytics',

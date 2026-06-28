@@ -37,4 +37,8 @@ export const interactionService = {
         )
         return data
     },
+
+    delete: async (id: number): Promise<void> => {
+        await axiosInstance.delete(ENDPOINTS.INTERACTION.DELETE(id))
+    },
 }

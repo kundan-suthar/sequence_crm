@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.deps import require_permission, is_admin
+from app.core.deps import get_current_user, require_permission, is_admin
 from app.db.session import get_db
 from app.models.interaction import Interaction
 from app.models.customer import Customer
@@ -175,3 +175,24 @@ async def update_interaction(
     await db.commit()
     await db.refresh(interaction)
     return interaction
+
+
+@router.delete("/{interaction_id}")
+async def delete_interaction(
+    interaction_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if not is_admin(user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    result = await db.execute(
+        select(Interaction).where(Interaction.id == interaction_id)
+    )
+    interaction = result.scalar_one_or_none()
+    if not interaction:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interaction not found")
+
+    await db.delete(interaction)
+    await db.commit()
+    return {"message": "Interaction deleted successfully"}

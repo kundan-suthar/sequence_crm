@@ -11,14 +11,20 @@ import {
     AlertCircle,
     ChevronLeft,
     ChevronRight,
+    Trash2,
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import { fetchCustomers } from '@/lib/redux/features/customer/customerSlice'
+import {
+    fetchCustomers,
+    deleteCustomer,
+} from '@/lib/redux/features/customer/customerSlice'
+import { selectIsAdmin } from '@/lib/redux/features/user/userSlice'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import CustomerStatusBadge from '@/components/customers/CustomerStatusBadge'
 import CustomerAvatar from '@/components/customers/CustomerAvatar'
 import { Customer } from '@/types/customer.types'
+import ConfirmDeleteDialog from '@/components/common/ConfirmDeleteDialog'
 
 const PAGE_SIZE = 10
 
@@ -26,9 +32,13 @@ export default function CustomersPage() {
     const dispatch = useAppDispatch()
     const router = useRouter()
     const { items, status, error } = useAppSelector((s) => s.customer)
+    const isAdmin = useAppSelector(selectIsAdmin)
 
     const [search, setSearch] = useState('')
     const [page, setPage] = useState(1)
+    const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null)
+    const [deleteLoading, setDeleteLoading] = useState(false)
+    const [deleteError, setDeleteError] = useState<string | null>(null)
 
     useEffect(() => {
         dispatch(fetchCustomers())
@@ -60,6 +70,18 @@ export default function CustomersPage() {
 
     function handleEdit(customer: Customer) {
         router.push(`/dashboard/customers/${customer.id}/edit`)
+    }
+
+    async function handleDelete(customer: Customer) {
+        setDeleteLoading(true)
+        try {
+            await dispatch(deleteCustomer(customer.id)).unwrap()
+            setDeleteTarget(null)
+        } catch (err) {
+            setDeleteError(err instanceof Error ? err.message : 'Failed to delete customer')
+        } finally {
+            setDeleteLoading(false)
+        }
     }
 
     return (
@@ -99,6 +121,17 @@ export default function CustomersPage() {
                 >
                     <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden="true" />
                     <span className="ml-2 text-sm text-muted-foreground">Loading customers…</span>
+                </div>
+            )}
+
+            {/* ── Delete error ─────────────────────────────────────────── */}
+            {deleteError !== null && (
+                <div
+                    className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                    role="alert"
+                >
+                    <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <p>{deleteError}</p>
                 </div>
             )}
 
@@ -178,6 +211,8 @@ export default function CustomersPage() {
                                                 customer={customer}
                                                 onView={handleView}
                                                 onEdit={handleEdit}
+                                                isAdmin={isAdmin}
+                                                onDelete={setDeleteTarget}
                                             />
                                         ))
                                     )}
@@ -196,6 +231,15 @@ export default function CustomersPage() {
                     />
                 </>
             )}
+
+            {/* ── Confirm Delete Dialog ────────────────────────────────── */}
+            <ConfirmDeleteDialog
+                open={deleteTarget !== null}
+                itemName={deleteTarget?.name ?? ''}
+                loading={deleteLoading}
+                onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+                onCancel={() => { setDeleteTarget(null); setDeleteError(null) }}
+            />
         </div>
     )
 }
@@ -206,9 +250,11 @@ interface CustomerRowProps {
     customer: Customer
     onView: (c: Customer) => void
     onEdit: (c: Customer) => void
+    onDelete?: (c: Customer) => void
+    isAdmin?: boolean
 }
 
-function CustomerRow({ customer, onView, onEdit }: CustomerRowProps) {
+function CustomerRow({ customer, onView, onEdit, onDelete, isAdmin }: CustomerRowProps) {
     return (
         <tr className="group hover:bg-muted/30 transition-colors">
             {/* Company */}
@@ -241,7 +287,7 @@ function CustomerRow({ customer, onView, onEdit }: CustomerRowProps) {
 
             {/* Actions */}
             <td className="px-4 py-3">
-                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center justify-end gap-1  group-hover:opacity-100 transition-opacity">
                     <button
                         type="button"
                         aria-label={`View ${customer.name}`}
@@ -258,6 +304,16 @@ function CustomerRow({ customer, onView, onEdit }: CustomerRowProps) {
                     >
                         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            aria-label={`Delete ${customer.name}`}
+                            onClick={(e) => { e.stopPropagation(); onDelete?.(customer) }}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                    )}
                 </div>
             </td>
         </tr>

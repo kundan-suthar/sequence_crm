@@ -80,6 +80,19 @@ export const updateInteraction = createAsyncThunk(
     }
 )
 
+export const deleteInteraction = createAsyncThunk(
+    'interaction/delete',
+    async (id: number, { rejectWithValue }) => {
+        try {
+            await interactionService.delete(id)
+            return id
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to delete interaction'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 // ── Slice ────────────────────────────────────────────────────────────────────
 
 const interactionSlice = createSlice({
@@ -129,6 +142,17 @@ const interactionSlice = createSlice({
             if (state.selectedInteraction?.id === action.payload.id) {
                 state.selectedInteraction = { ...action.payload, ai_insight: state.selectedInteraction.ai_insight }
             }
+        })
+
+        // delete
+        builder.addCase(deleteInteraction.fulfilled, (state, action) => {
+            state.items = state.items.filter((i) => i.id !== action.payload)
+            if (state.selectedInteraction?.id === action.payload) {
+                state.selectedInteraction = null
+            }
+        })
+        builder.addCase(deleteInteraction.rejected, (state, action) => {
+            state.error = action.payload as string
         })
     },
 })
