@@ -154,7 +154,7 @@ async def get_dashboard_analytics(
     # ------------------------------------------------------------------
     # 5 & 6 — at_risk_customers + change
     # ------------------------------------------------------------------
-    at_risk_statuses = ("at_risk", "churned")
+    at_risk_statuses = ("at-risk", "churned")
 
     at_risk_q = select(func.count(Customer.id)).where(
         Customer.status.in_(at_risk_statuses)
@@ -251,7 +251,7 @@ async def get_dashboard_analytics(
         func.count(Customer.id).filter(Customer.status == "active").label("healthy"),
         func.count(Customer.id).filter(Customer.status == "prospect").label("stagnant"),
         func.count(Customer.id)
-        .filter(Customer.status.in_(("at_risk", "churned")))
+        .filter(Customer.status.in_(("at-risk", "churned")))
         .label("churn_risk"),
     )
     if not is_admin(user):

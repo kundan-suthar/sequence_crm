@@ -11,10 +11,10 @@ _redis_client: Optional[aioredis.Redis] = None
 
 if settings.REDIS_URL:
     try:
+        _redis_url = settings.REDIS_URL.strip()
         _redis_client = aioredis.from_url(
-            settings.REDIS_URL,
+            _redis_url,
             decode_responses=True,
-            ssl=settings.REDIS_URL.startswith("rediss://"),
         )
         logger.info("Redis client initialised.")
     except Exception as exc:  # pragma: no cover
