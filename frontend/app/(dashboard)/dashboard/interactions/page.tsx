@@ -23,10 +23,11 @@ import {
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { fetchInteractions } from '@/lib/redux/features/interaction/interactionSlice'
+import { fetchCustomers } from '@/lib/redux/features/customer/customerSlice'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import CustomerAvatar from '@/components/customers/CustomerAvatar'
-import { Interaction, InteractionType, AIInsight, SentimentType } from '@/types/interaction.types'
+import { Interaction, InteractionType, AIInsight, SentimentType, InteractionWithInsight } from '@/types/interaction.types'
 
 const PAGE_SIZE = 10
 
@@ -153,6 +154,7 @@ export default function InteractionsPage() {
     const dispatch = useAppDispatch()
     const router = useRouter()
     const { items, status, error } = useAppSelector((s) => s.interaction)
+    const { items: customers } = useAppSelector((s) => s.customer)
 
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState<InteractionType | 'all'>('all')
@@ -161,7 +163,15 @@ export default function InteractionsPage() {
 
     useEffect(() => {
         dispatch(fetchInteractions())
+        dispatch(fetchCustomers())
     }, [dispatch])
+
+    // Build a quick id→name lookup for the customer column
+    const customerMap = useMemo(() => {
+        const map = new Map<number, string>()
+        customers.forEach((c) => map.set(c.id, c.name))
+        return map
+    }, [customers])
 
     // Reset to page 1 on search/filter change
     useEffect(() => {
@@ -180,12 +190,13 @@ export default function InteractionsPage() {
             result = result.filter(
                 (i) =>
                     i.title.toLowerCase().includes(q) ||
-                    String(i.customer_id).includes(q)
+                    String(i.customer_id).includes(q) ||
+                    (customerMap.get(i.customer_id) ?? '').toLowerCase().includes(q)
             )
         }
 
         return result
-    }, [items, search, typeFilter])
+    }, [items, search, typeFilter, customerMap])
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
     const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -351,10 +362,11 @@ export default function InteractionsPage() {
                                             </td>
                                         </tr>
                                     ) : (
-                                        paginated.map((interaction) => (
+                        paginated.map((interaction) => (
                                             <InteractionRow
                                                 key={interaction.id}
                                                 interaction={interaction}
+                                                customerName={customerMap.get(interaction.customer_id)}
                                                 expanded={expandedRows.has(interaction.id)}
                                                 onToggle={() => toggleRow(interaction.id)}
                                                 onView={() => handleView(interaction.id)}
@@ -385,13 +397,14 @@ export default function InteractionsPage() {
 
 interface InteractionRowProps {
     interaction: Interaction & { ai_insight?: AIInsight | null }
+    customerName?: string
     expanded: boolean
     onToggle: () => void
     onView: () => void
     onEdit: () => void
 }
 
-function InteractionRow({ interaction, expanded, onToggle, onView, onEdit }: InteractionRowProps) {
+function InteractionRow({ interaction, customerName, expanded, onToggle, onView, onEdit }: InteractionRowProps) {
     const date = new Date(interaction.occurred_at).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'short',
@@ -424,9 +437,9 @@ function InteractionRow({ interaction, expanded, onToggle, onView, onEdit }: Int
                 {/* Customer */}
                 <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                        <CustomerAvatar name={`Customer ${interaction.customer_id}`} />
+                        <CustomerAvatar name={customerName ?? `Customer ${interaction.customer_id}`} />
                         <span className="text-foreground font-medium">
-                            #{interaction.customer_id}
+                            {customerName ?? `#${interaction.customer_id}`}
                         </span>
                     </div>
                 </td>

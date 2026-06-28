@@ -18,7 +18,6 @@ const navItems = [
     { label: 'Customers', href: '/dashboard/customers', icon: Users },
     { label: 'Interactions', href: '/dashboard/interactions', icon: Handshake },
     { label: 'Users', href: '/dashboard/users', icon: UserCog },
-    { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 export default function Sidebar() {
