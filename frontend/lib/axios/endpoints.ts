@@ -12,4 +12,11 @@ export const ENDPOINTS = {
         UPDATE: (id: string) => `/users/${id}`,
         DELETE: (id: string) => `/users/${id}`,
     },
+    CUSTOMER: {
+        LIST: '/customers',
+        CREATE: '/customers',
+        DETAIL: (id: number) => `/customers/${id}`,
+        UPDATE: (id: number) => `/customers/${id}`,
+        DELETE: (id: number) => `/customers/${id}`,
+    },
 } as const

@@ -6,10 +6,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, ShieldCheck, Sparkles, LayoutDashboard, Lock } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, Sparkles, LayoutDashboard } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useDispatch } from 'react-redux'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
     Form,
     FormControl,
@@ -19,6 +20,9 @@ import {
     FormMessage,
 } from '@/components/ui/form'
 import { authService } from '@/services/auth/auth.service'
+import { setUser } from '@/lib/redux/features/user/userSlice'
+import { setAuthTokenGetter } from '@/lib/axios/axiosInstance'
+import { AppDispatch } from '@/lib/redux/store'
 
 // ── Zod schema ──────────────────────────────────────────────────────────────
 const signInSchema = z.object({
@@ -40,6 +44,8 @@ export default function SignInPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [serverError, setServerError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const router = useRouter()
+    const dispatch = useDispatch<AppDispatch>()
 
     const form = useForm<SignInFormValues>({
         resolver: zodResolver(signInSchema),
@@ -51,13 +57,27 @@ export default function SignInPage() {
 
     const onSubmit = async (values: SignInFormValues) => {
         try {
+            debugger
             setServerError(null)
             setIsLoading(true)
-            await authService.login({
+
+            // 1. Get the access token
+            const { access_token } = await authService.login({
                 email: values.email,
                 password: values.password,
             })
-            // TODO: store token / redirect to dashboard
+
+            // 2. Make the token available to axios before calling /me
+            setAuthTokenGetter(() => access_token)
+
+            // 3. Fetch the current user profile
+            const user = await authService.getCurrentUser()
+
+            // 4. Persist in Redux (axios token getter is also updated via StoreProvider)
+            dispatch(setUser({ user, accessToken: access_token }))
+
+            // 5. Redirect to dashboard
+            router.push('/dashboard')
         } catch (err: unknown) {
             const message =
                 err instanceof Error ? err.message : 'Invalid credentials. Please try again.'

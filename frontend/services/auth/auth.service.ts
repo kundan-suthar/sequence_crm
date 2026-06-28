@@ -20,12 +20,12 @@ export interface AuthUser {
 }
 
 export const authService = {
-    login: async (payload: LoginPayload) => {
-        const { data } = await axiosInstance.post<ApiResponse<AuthUser>>(
+    login: async (payload: LoginPayload): Promise<{ access_token: string }> => {
+        const { data } = await axiosInstance.post<{ access_token: string }>(
             ENDPOINTS.AUTH.LOGIN,
             payload
         )
-        return data.data
+        return data
     },
 
     register: async (payload: RegisterPayload) => {
@@ -40,10 +40,10 @@ export const authService = {
         await axiosInstance.post(ENDPOINTS.AUTH.LOGOUT)
     },
 
-    getCurrentUser: async () => {
-        const { data } = await axiosInstance.get<ApiResponse<AuthUser>>(
+    getCurrentUser: async (): Promise<AuthUser> => {
+        const { data } = await axiosInstance.get<AuthUser>(
             ENDPOINTS.AUTH.ME
         )
-        return data.data
+        return data
     },
 }

@@ -18,7 +18,7 @@ export function normalizeAxiosError(error: unknown): ApiError {
         const responseData = error.response?.data as ApiErrorResponse | undefined
 
         const message =
-            responseData?.message ||
+            responseData?.detail ||
             error.message ||
             'Something went wrong. Please try again.'
 

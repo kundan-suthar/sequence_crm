@@ -8,12 +8,24 @@ import { normalizeAxiosError } from './apiError'
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 const TIMEOUT = Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 15000
 
-// Token getter is injected to avoid circular deps with redux store
+// Token getter/setter are injected to avoid circular deps with redux store
 let getAccessToken: () => string | null = () => null
+let updateAccessToken: (token: string) => void = () => { }
 let onUnauthorized: () => void = () => { }
+
+const AUTH_ENDPOINTS_NO_REFRESH = ['/auth/login', '/auth/register', '/auth/refresh']
+
+function shouldSkipRefresh(url?: string) {
+  if (!url) return false
+  return AUTH_ENDPOINTS_NO_REFRESH.some((endpoint) => url.includes(endpoint))
+}
 
 export function setAuthTokenGetter(fn: () => string | null) {
     getAccessToken = fn
+}
+
+export function setAccessTokenUpdater(fn: (token: string) => void) {
+    updateAccessToken = fn
 }
 
 export function setUnauthorizedHandler(fn: () => void) {
@@ -26,6 +38,7 @@ const axiosInstance: AxiosInstance = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials:true
 })
 
 // ---- Request Interceptor ----
@@ -50,9 +63,9 @@ axiosInstance.interceptors.response.use(
         const originalRequest = error.config as InternalAxiosRequestConfig & {
             _retry?: boolean
         }
-
+        const isAuthEndpoint = shouldSkipRefresh(originalRequest.url)
         // Handle 401 — token refresh flow
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry &&  !isAuthEndpoint) {
             if (isRefreshing) {
                 // Queue requests while refresh is in progress
                 return new Promise((resolve) => {
@@ -64,7 +77,9 @@ axiosInstance.interceptors.response.use(
             isRefreshing = true
 
             try {
-                await axiosInstance.post('/auth/refresh')
+                const { data } = await axiosInstance.post<{ access_token: string }>('/auth/refresh')
+                updateAccessToken(data.access_token)
+
                 pendingQueue.forEach((cb) => cb())
                 pendingQueue = []
                 return axiosInstance(originalRequest)

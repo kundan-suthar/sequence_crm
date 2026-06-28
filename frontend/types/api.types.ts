@@ -7,9 +7,13 @@ export interface ApiResponse<T = unknown> {
 
 export interface ApiErrorResponse {
     success: false
-    message: string
+    detail: string
     errors?: Record<string, string[]> | null
     statusCode?: number
+    error: {
+    code: string
+    message: string
+  }
 }
 
 export interface PaginatedResponse<T> {
