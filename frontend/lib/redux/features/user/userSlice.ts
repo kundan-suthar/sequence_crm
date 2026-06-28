@@ -32,6 +32,12 @@ export const userSlice = createSlice({
             state.accessToken = action.payload.accessToken
             state.isAuthenticated = true
         },
+        restoreUser: (state, action: PayloadAction<User>) => {
+            // Used on page refresh: the axios interceptor already updated accessToken
+            // via setAccessToken, so we only restore currentUser + isAuthenticated.
+            state.currentUser = action.payload
+            state.isAuthenticated = true
+        },
         setAccessToken: (state, action: PayloadAction<string>) => {
             state.accessToken = action.payload
         },
@@ -43,7 +49,7 @@ export const userSlice = createSlice({
     },
 })
 
-export const { setUser, setAccessToken, clearUser } = userSlice.actions
+export const { setUser, restoreUser, setAccessToken, clearUser } = userSlice.actions
 export default userSlice.reducer
 
 export const selectIsAdmin = (state: RootState): boolean =>

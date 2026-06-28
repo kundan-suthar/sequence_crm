@@ -41,7 +41,7 @@ export default function Sidebar() {
             {/* Nav */}
             <nav className="flex-1 px-3 py-4 space-y-0.5" aria-label="Main navigation">
                 {navItems.map(({ label, href, icon: Icon }) => {
-                    const active = pathname === href || pathname.startsWith(href + '/')
+                    const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'))
                     return (
                         <Link
                             key={href}

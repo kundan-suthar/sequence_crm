@@ -20,14 +20,17 @@ import {
     Clock,
     AlertTriangle,
     TriangleAlert,
+    Trash2,
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import { fetchInteractions } from '@/lib/redux/features/interaction/interactionSlice'
+import { fetchInteractions, deleteInteraction } from '@/lib/redux/features/interaction/interactionSlice'
 import { fetchCustomers } from '@/lib/redux/features/customer/customerSlice'
+import { selectIsAdmin } from '@/lib/redux/features/user/userSlice'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import CustomerAvatar from '@/components/customers/CustomerAvatar'
-import { Interaction, InteractionType, AIInsight, SentimentType, InteractionWithInsight } from '@/types/interaction.types'
+import ConfirmDeleteDialog from '@/components/common/ConfirmDeleteDialog'
+import { Interaction, InteractionType, AIInsight, SentimentType } from '@/types/interaction.types'
 
 const PAGE_SIZE = 10
 
@@ -155,11 +158,15 @@ export default function InteractionsPage() {
     const router = useRouter()
     const { items, status, error } = useAppSelector((s) => s.interaction)
     const { items: customers } = useAppSelector((s) => s.customer)
+    const isAdmin = useAppSelector(selectIsAdmin)
 
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState<InteractionType | 'all'>('all')
     const [page, setPage] = useState(1)
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
+    const [deleteTarget, setDeleteTarget] = useState<Interaction | null>(null)
+    const [deleteLoading, setDeleteLoading] = useState(false)
+    const [deleteError, setDeleteError] = useState<string | null>(null)
 
     useEffect(() => {
         dispatch(fetchInteractions())
@@ -219,6 +226,18 @@ export default function InteractionsPage() {
 
     function handleEdit(id: number) {
         router.push(`/dashboard/interactions/${id}/edit`)
+    }
+
+    async function handleDelete(interaction: Interaction) {
+        setDeleteLoading(true)
+        try {
+            await dispatch(deleteInteraction(interaction.id)).unwrap()
+            setDeleteTarget(null)
+        } catch (err) {
+            setDeleteError(err instanceof Error ? err.message : 'Failed to delete interaction')
+        } finally {
+            setDeleteLoading(false)
+        }
     }
 
     const typeButtons: { label: string; value: InteractionType | 'all' }[] = [
@@ -313,6 +332,17 @@ export default function InteractionsPage() {
                 </div>
             )}
 
+            {/* ── Delete error ─────────────────────────────────────────── */}
+            {deleteError !== null && (
+                <div
+                    className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                    role="alert"
+                >
+                    <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <p>{deleteError}</p>
+                </div>
+            )}
+
             {/* ── Table ────────────────────────────────────────────────── */}
             {status === 'succeeded' && (
                 <>
@@ -371,6 +401,8 @@ export default function InteractionsPage() {
                                                 onToggle={() => toggleRow(interaction.id)}
                                                 onView={() => handleView(interaction.id)}
                                                 onEdit={() => handleEdit(interaction.id)}
+                                                isAdmin={isAdmin}
+                                                onDelete={setDeleteTarget}
                                             />
                                         ))
                                     )}
@@ -389,6 +421,14 @@ export default function InteractionsPage() {
                     />
                 </>
             )}
+            {/* ── Confirm Delete Dialog ────────────────────────────────── */}
+            <ConfirmDeleteDialog
+                open={deleteTarget !== null}
+                itemName={deleteTarget?.title ?? ''}
+                loading={deleteLoading}
+                onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+                onCancel={() => { setDeleteTarget(null); setDeleteError(null) }}
+            />
         </div>
     )
 }
@@ -402,9 +442,11 @@ interface InteractionRowProps {
     onToggle: () => void
     onView: () => void
     onEdit: () => void
+    isAdmin?: boolean
+    onDelete?: (i: Interaction) => void
 }
 
-function InteractionRow({ interaction, customerName, expanded, onToggle, onView, onEdit }: InteractionRowProps) {
+function InteractionRow({ interaction, customerName, expanded, onToggle, onView, onEdit, isAdmin, onDelete }: InteractionRowProps) {
     const date = new Date(interaction.occurred_at).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'short',
@@ -496,6 +538,16 @@ function InteractionRow({ interaction, customerName, expanded, onToggle, onView,
                         >
                             <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                aria-label={`Delete interaction ${interaction.title}`}
+                                onClick={(e) => { e.stopPropagation(); onDelete?.(interaction) }}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                        )}
                     </div>
                 </td>
             </tr>

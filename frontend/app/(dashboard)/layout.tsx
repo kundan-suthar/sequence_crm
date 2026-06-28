@@ -3,10 +3,13 @@ import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
 import { SidebarProvider } from '@/contexts/SidebarContext'
 import MobileSidebarDrawer from '@/components/layout/MobileSidebarDrawer'
+import SessionRestorer from '@/components/layout/SessionRestorer'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
         <SidebarProvider>
+            {/* Restores currentUser + roles into Redux after a page refresh */}
+            <SessionRestorer />
             <div className="flex h-screen overflow-hidden bg-background">
                 {/* Mobile drawer — hidden on lg+ */}
                 <MobileSidebarDrawer />
