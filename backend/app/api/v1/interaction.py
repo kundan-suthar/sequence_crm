@@ -23,14 +23,38 @@ logger = logging.getLogger("app.api.interaction")
 router = APIRouter(prefix="/interactions", tags=["interactions"])
 
 
-@router.get("", response_model=list[InteractionOut])
+# @router.get("", response_model=list[InteractionOut])
+# async def list_interactions(
+#     customer_id: int | None = Query(None, description="Filter by customer ID"),
+#     type: str | None = Query(None, description="Filter by interaction type (call, meeting, email)"),
+#     db: AsyncSession = Depends(get_db),
+#     user: User = Depends(require_permission("interaction:view")),
+# ):
+#     query = select(Interaction)
+
+#     # Non-admin users can only see interactions they created
+#     if not is_admin(user):
+#         query = query.where(Interaction.created_by == user.id)
+
+#     if customer_id is not None:
+#         query = query.where(Interaction.customer_id == customer_id)
+
+#     if type is not None:
+#         query = query.where(Interaction.type == type)
+
+#     query = query.order_by(Interaction.occurred_at.desc())
+
+#     result = await db.execute(query)
+#     return result.scalars().all()
+
+@router.get("", response_model=list[InteractionWithInsightOut])
 async def list_interactions(
     customer_id: int | None = Query(None, description="Filter by customer ID"),
     type: str | None = Query(None, description="Filter by interaction type (call, meeting, email)"),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_permission("interaction:view")),
 ):
-    query = select(Interaction)
+    query = select(Interaction).options(selectinload(Interaction.ai_insight))
 
     # Non-admin users can only see interactions they created
     if not is_admin(user):
@@ -46,7 +70,6 @@ async def list_interactions(
 
     result = await db.execute(query)
     return result.scalars().all()
-
 
 @router.post("", response_model=InteractionWithInsightOut, status_code=status.HTTP_201_CREATED)
 async def create_interaction(

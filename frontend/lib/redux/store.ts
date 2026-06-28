@@ -1,12 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit'
 import userReducer from './features/user/userSlice'
 import customerReducer from './features/customer/customerSlice'
+import interactionReducer from './features/interaction/interactionSlice'
 
 export const makeStore = () => {
     return configureStore({
         reducer: {
             user: userReducer,
             customer: customerReducer,
+            interaction: interactionReducer,
         },
     })
 }

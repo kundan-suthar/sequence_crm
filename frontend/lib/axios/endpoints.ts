@@ -19,4 +19,10 @@ export const ENDPOINTS = {
         UPDATE: (id: number) => `/customers/${id}`,
         DELETE: (id: number) => `/customers/${id}`,
     },
+    INTERACTION: {
+        LIST: '/interactions',
+        CREATE: '/interactions',
+        DETAIL: (id: number) => `/interactions/${id}`,
+        UPDATE: (id: number) => `/interactions/${id}`,
+    },
 } as const
