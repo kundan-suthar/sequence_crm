@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     OPENAI_API_KEY: str = ""
+    REDIS_URL: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env"
