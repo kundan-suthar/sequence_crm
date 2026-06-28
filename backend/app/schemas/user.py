@@ -1,4 +1,4 @@
-# app/schemas/user.py
+
 from pydantic import BaseModel, EmailStr
 
 class RegisterIn(BaseModel):

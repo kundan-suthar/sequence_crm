@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.db.session import get_db
 from app.core.security import decode_token
 from app.models.user import User
+from app.models.role import Role
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -25,7 +26,9 @@ async def get_current_user(
         raise HTTPException(401, "Invalid or expired token")
 
     result = await db.execute(
-        select(User).options(selectinload(User.roles)).where(User.id == user_id)
+        select(User)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
+        .where(User.id == user_id)
     )
     user = result.scalar_one_or_none()
     if not user or not user.is_active:
@@ -51,3 +54,6 @@ def require_permission(permission_name: str):
             raise HTTPException(403, "Not enough permissions")
         return user
     return checker
+
+def is_admin(user: User) -> bool:
+    return any(r.name == "admin" for r in user.roles)

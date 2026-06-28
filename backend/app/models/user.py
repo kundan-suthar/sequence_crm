@@ -10,6 +10,8 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from .role import Role
+    from .customer import Customer
+    from .interaction import Interaction
 
 user_roles = Table(
     "user_roles",
@@ -53,3 +55,5 @@ class User(Base):
         secondary=user_roles,
         back_populates="users",
     )
+    customers: Mapped[list["Customer"]] = relationship(back_populates="owner")
+    interactions: Mapped[list["Interaction"]] = relationship(back_populates="creator")
