@@ -1,0 +1,31 @@
+# app/core/security.py
+from datetime import datetime, timedelta, timezone
+from passlib.context import CryptContext
+from jose import jwt, JWTError
+from app.core.config import settings
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+ACCESS_EXPIRE_MIN = 15
+REFRESH_EXPIRE_DAYS = 7
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+
+def _create_token(data: dict, expires_delta: timedelta) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + expires_delta
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+def create_access_token(sub: str) -> str:
+    return _create_token({"sub": sub, "type": "access"}, timedelta(minutes=ACCESS_EXPIRE_MIN))
+
+def create_refresh_token(sub: str) -> str:
+    return _create_token({"sub": sub, "type": "refresh"}, timedelta(days=REFRESH_EXPIRE_DAYS))
+
+def decode_token(token: str) -> dict:
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
