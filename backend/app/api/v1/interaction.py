@@ -1,13 +1,24 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.deps import require_permission, is_admin
 from app.db.session import get_db
 from app.models.interaction import Interaction
 from app.models.customer import Customer
 from app.models.user import User
-from app.schemas.interaction import InteractionCreate, InteractionUpdate, InteractionOut
+from app.schemas.interaction import (
+    InteractionCreate,
+    InteractionUpdate,
+    InteractionOut,
+    InteractionWithInsightOut,
+)
+from app.services.ai_service import generate_ai_insight
+
+logger = logging.getLogger("app.api.interaction")
 
 router = APIRouter(prefix="/interactions", tags=["interactions"])
 
@@ -37,7 +48,7 @@ async def list_interactions(
     return result.scalars().all()
 
 
-@router.post("", response_model=InteractionOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=InteractionWithInsightOut, status_code=status.HTTP_201_CREATED)
 async def create_interaction(
     data: InteractionCreate,
     db: AsyncSession = Depends(get_db),
@@ -69,17 +80,31 @@ async def create_interaction(
     db.add(interaction)
     await db.commit()
     await db.refresh(interaction)
+
+    # Generate AI insight from the interaction notes
+    logger.info(f"Generating AI insight for interaction {interaction.id}")
+    ai_insight = await generate_ai_insight(interaction, db)
+
+    # Reload interaction with the insight relationship populated
+    result = await db.execute(
+        select(Interaction)
+        .options(selectinload(Interaction.ai_insight))
+        .where(Interaction.id == interaction.id)
+    )
+    interaction = result.scalar_one()
     return interaction
 
 
-@router.get("/{interaction_id}", response_model=InteractionOut)
+@router.get("/{interaction_id}", response_model=InteractionWithInsightOut)
 async def get_interaction(
     interaction_id: int,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_permission("interaction:view")),
 ):
     result = await db.execute(
-        select(Interaction).where(Interaction.id == interaction_id)
+        select(Interaction)
+        .options(selectinload(Interaction.ai_insight))
+        .where(Interaction.id == interaction_id)
     )
     interaction = result.scalar_one_or_none()
     if not interaction:

@@ -17,6 +17,22 @@ class InteractionUpdate(BaseModel):
     occurred_at: datetime | None = None
 
 
+class AIInsightOut(BaseModel):
+    id: int
+    interaction_id: int
+    summary: str | None
+    sentiment: str | None
+    action_items: list | None
+    risks: list | None
+    status: str
+    error_message: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class InteractionOut(BaseModel):
     id: int
     customer_id: int
@@ -30,3 +46,8 @@ class InteractionOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class InteractionWithInsightOut(InteractionOut):
+    """Returned from create endpoint — includes the generated AI insight."""
+    ai_insight: AIInsightOut | None = None
