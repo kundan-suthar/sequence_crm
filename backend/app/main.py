@@ -6,11 +6,15 @@ from app.api.v1.admin import router as admin_router
 from app.api.v1.customer import router as customer_router
 from app.core.logging_config import setup_logging
 from app.core.logging_middleware import LoggingMiddleware
+from app.core.error_handlers import register_error_handlers
 
 # Initialize logging configuration
 setup_logging()
 
 app = FastAPI()
+
+# Register global error handlers
+register_error_handlers(app)
 
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(
