@@ -34,6 +34,6 @@ app.include_router(customer_router)
 app.include_router(interaction_router)
 app.include_router(dashboard_router)
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok"}
