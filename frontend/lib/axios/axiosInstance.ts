@@ -60,12 +60,19 @@ let pendingQueue: Array<() => void> = []
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
+        // error.config can be undefined for network errors (e.g. CORS pre-flight
+        // failures, request cancellations). Guard here to avoid crashing the
+        // interceptor before the refresh flow ever runs.
+        if (!error.config) {
+            return Promise.reject(normalizeAxiosError(error))
+        }
+
         const originalRequest = error.config as InternalAxiosRequestConfig & {
             _retry?: boolean
         }
         const isAuthEndpoint = shouldSkipRefresh(originalRequest.url)
         // Handle 401 — token refresh flow
-        if (error.response?.status === 401 && !originalRequest._retry &&  !isAuthEndpoint) {
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             if (isRefreshing) {
                 // Queue requests while refresh is in progress
                 return new Promise((resolve) => {
