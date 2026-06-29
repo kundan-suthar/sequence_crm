@@ -59,7 +59,7 @@ async def login(data: LoginIn, response: Response, db: AsyncSession = Depends(ge
         value=refresh_token,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite="none",   # cross-origin (Vercel → Render) requires SameSite=None
         max_age=REFRESH_EXPIRE_DAYS * 24 * 3600,
         path="/auth",
     )
@@ -90,7 +90,7 @@ async def refresh(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("refresh_token", path="/auth")
+    response.delete_cookie("refresh_token", path="/auth", secure=True, samesite="none")
     return {"message": "logged out"}
 
 
