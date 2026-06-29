@@ -22,6 +22,7 @@ import {
 import { authService } from '@/services/auth/auth.service'
 import { setUser } from '@/lib/redux/features/user/userSlice'
 import { setAuthTokenGetter } from '@/lib/axios/axiosInstance'
+import { setSessionCookie } from '@/services/auth/auth.service'
 import { AppDispatch } from '@/lib/redux/store'
 
 // ── Zod schema ──────────────────────────────────────────────────────────────
@@ -75,7 +76,10 @@ export default function SignInPage() {
             // 4. Persist in Redux (axios token getter is also updated via StoreProvider)
             dispatch(setUser({ user, accessToken: access_token }))
 
-            // 5. Redirect to dashboard
+            // 5. Set session cookie so middleware can gate protected routes
+            setSessionCookie()
+
+            // 6. Redirect to dashboard
             router.push('/dashboard')
         } catch (err: unknown) {
             const message =

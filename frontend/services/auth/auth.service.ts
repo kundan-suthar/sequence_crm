@@ -20,6 +20,24 @@ export interface AuthUser {
     roles: string[]
 }
 
+// ── Session cookie helpers ────────────────────────────────────────────────────
+// A lightweight non-httpOnly "session=1" cookie that middleware can read to
+// decide route access. It carries no sensitive data — security is enforced by
+// the httpOnly refresh_token cookie + in-memory access token.
+
+const SESSION_COOKIE = 'session'
+
+export function setSessionCookie() {
+    // Expires with the browser session (no max-age); SameSite=Lax is the default
+    document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax`
+}
+
+export function clearSessionCookie() {
+    document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`
+}
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
 export const authService = {
     login: async (payload: LoginPayload): Promise<{ access_token: string }> => {
         const { data } = await axiosInstance.post<{ access_token: string }>(

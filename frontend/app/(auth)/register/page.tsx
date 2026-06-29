@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff, ShieldCheck, ArrowRight, LayoutDashboard } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -18,6 +19,7 @@ import {
     FormMessage,
 } from '@/components/ui/form'
 import { authService } from '@/services/auth/auth.service'
+import { setSessionCookie } from '@/services/auth/auth.service'
 
 // ── Zod schema ──────────────────────────────────────────────────────────────
 const registerSchema = z
@@ -43,6 +45,7 @@ export default function RegisterPage() {
     const [showConfirm, setShowConfirm] = useState(false)
     const [serverError, setServerError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const router = useRouter()
 
     const form = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
@@ -62,7 +65,10 @@ export default function RegisterPage() {
                 email: values.email,
                 password: values.password,
             })
-            // TODO: store token / redirect to dashboard
+            // Set session cookie so middleware allows access to protected routes,
+            // then redirect to sign-in to complete the login flow
+            setSessionCookie()
+            router.push('/sign-in')
         } catch (err: unknown) {
             const message =
                 err instanceof Error ? err.message : 'Registration failed. Please try again.'
