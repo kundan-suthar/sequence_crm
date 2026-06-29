@@ -8,7 +8,7 @@ from jose import JWTError
 from app.db.session import get_db
 from app.models.user import User
 from app.models.role import Role
-from app.schemas.user import RegisterIn, LoginIn, UserOut, TokenOut
+from app.schemas.user import RegisterIn, LoginIn, UserOut, TokenOut, RefreshIn
 from app.core.security import (
     hash_password, verify_password,
     create_access_token, create_refresh_token, decode_token,
@@ -63,12 +63,12 @@ async def login(data: LoginIn, response: Response, db: AsyncSession = Depends(ge
         max_age=REFRESH_EXPIRE_DAYS * 24 * 3600,
         path="/auth",
     )
-    return TokenOut(access_token=access_token)
+    return TokenOut(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/refresh", response_model=TokenOut)
-async def refresh(request: Request, db: AsyncSession = Depends(get_db)):
-    token = request.cookies.get("refresh_token")
+async def refresh(request: Request, body: RefreshIn = None, db: AsyncSession = Depends(get_db)):
+    token = (body.refresh_token if body else None) or request.cookies.get("refresh_token")
     if not token:
         raise HTTPException(401, "No refresh token")
     try:

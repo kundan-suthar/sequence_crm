@@ -7,6 +7,11 @@ export interface LoginPayload {
     password: string
 }
 
+export interface LoginResponse {
+    access_token: string
+    refresh_token: string
+}
+
 export interface RegisterPayload {
     name: string
     email: string
@@ -18,6 +23,34 @@ export interface AuthUser {
     name: string
     email: string
     roles: string[]
+}
+
+// ── localStorage refresh token helpers ───────────────────────────────────────
+
+const REFRESH_TOKEN_KEY = 'refresh_token'
+
+export function saveRefreshToken(token: string): void {
+    try {
+        localStorage.setItem(REFRESH_TOKEN_KEY, token)
+    } catch {
+        // SSR or storage unavailable — silently ignore
+    }
+}
+
+export function getRefreshToken(): string | null {
+    try {
+        return localStorage.getItem(REFRESH_TOKEN_KEY)
+    } catch {
+        return null
+    }
+}
+
+export function clearRefreshToken(): void {
+    try {
+        localStorage.removeItem(REFRESH_TOKEN_KEY)
+    } catch {
+        // SSR or storage unavailable — silently ignore
+    }
 }
 
 // ── Session cookie helpers ────────────────────────────────────────────────────
@@ -39,11 +72,12 @@ export function clearSessionCookie() {
 // ── Service ───────────────────────────────────────────────────────────────────
 
 export const authService = {
-    login: async (payload: LoginPayload): Promise<{ access_token: string }> => {
-        const { data } = await axiosInstance.post<{ access_token: string }>(
+    login: async (payload: LoginPayload): Promise<LoginResponse> => {
+        const { data } = await axiosInstance.post<LoginResponse>(
             ENDPOINTS.AUTH.LOGIN,
             payload
         )
+        saveRefreshToken(data.refresh_token)
         return data
     },
 
@@ -57,6 +91,8 @@ export const authService = {
 
     logout: async () => {
         await axiosInstance.post(ENDPOINTS.AUTH.LOGOUT)
+        clearRefreshToken()
+        clearSessionCookie()
     },
 
     getCurrentUser: async (): Promise<AuthUser> => {

@@ -12,6 +12,7 @@ const TIMEOUT = Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 15000
 let getAccessToken: () => string | null = () => null
 let updateAccessToken: (token: string) => void = () => { }
 let onUnauthorized: () => void = () => { }
+let getRefreshToken: () => string | null = () => null
 
 const AUTH_ENDPOINTS_NO_REFRESH = ['/auth/login', '/auth/register', '/auth/refresh']
 
@@ -30,6 +31,10 @@ export function setAccessTokenUpdater(fn: (token: string) => void) {
 
 export function setUnauthorizedHandler(fn: () => void) {
     onUnauthorized = fn
+}
+
+export function setRefreshTokenGetter(fn: () => string | null): void {
+    getRefreshToken = fn
 }
 
 const axiosInstance: AxiosInstance = axios.create({
@@ -84,7 +89,11 @@ axiosInstance.interceptors.response.use(
             isRefreshing = true
 
             try {
-                const { data } = await axiosInstance.post<{ access_token: string }>('/auth/refresh')
+                const refreshToken = getRefreshToken()
+                const { data } = await axiosInstance.post<{ access_token: string }>(
+                    '/auth/refresh',
+                    refreshToken ? { refresh_token: refreshToken } : {}
+                )
                 updateAccessToken(data.access_token)
 
                 pendingQueue.forEach((cb) => cb())

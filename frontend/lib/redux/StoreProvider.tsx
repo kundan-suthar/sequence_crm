@@ -3,8 +3,9 @@
 import { useRef } from 'react'
 import { Provider } from 'react-redux'
 import { makeStore, AppStore } from './store'
-import { setAuthTokenGetter, setAccessTokenUpdater, setUnauthorizedHandler } from '@/lib/axios/axiosInstance'
+import { setAuthTokenGetter, setAccessTokenUpdater, setUnauthorizedHandler, setRefreshTokenGetter } from '@/lib/axios/axiosInstance'
 import { setAccessToken, clearUser } from './features/user/userSlice'
+import { getRefreshToken, clearRefreshToken, clearSessionCookie } from '@/services/auth/auth.service'
 
 export default function StoreProvider({
     children,
@@ -25,11 +26,18 @@ export default function StoreProvider({
             store.dispatch(setAccessToken(token))
         })
 
-        // Redirect to sign-in and clear state when a refresh attempt fails
+        // Redirect to sign-in and clear state when a refresh attempt fails.
+        // clearSessionCookie() + clearRefreshToken() ensure middleware won't
+        // redirect back to /dashboard (preventing the infinite redirect loop).
         setUnauthorizedHandler(() => {
             store.dispatch(clearUser())
+            clearRefreshToken()
+            clearSessionCookie()
             window.location.href = '/sign-in'
         })
+
+        // Wire the localStorage refresh token getter into the axios interceptor
+        setRefreshTokenGetter(getRefreshToken)
     }
 
     return <Provider store={storeRef.current}>{children}</Provider>
