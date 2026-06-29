@@ -57,7 +57,6 @@ export default function SignInPage() {
 
     const onSubmit = async (values: SignInFormValues) => {
         try {
-            debugger
             setServerError(null)
             setIsLoading(true)
 
@@ -239,7 +238,7 @@ export default function SignInPage() {
                                 )}
                             />
 
-                            
+
 
                             {/* Server error */}
                             {serverError && (

@@ -9,6 +9,7 @@ from app.api.v1.dashboard import dashboard_router
 from app.core.logging_config import setup_logging
 from app.core.logging_middleware import LoggingMiddleware
 from app.core.error_handlers import register_error_handlers
+from app.core.config import settings
 
 # Initialize logging configuration
 setup_logging()
@@ -21,7 +22,7 @@ register_error_handlers(app)
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
