@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import userReducer from './features/user/userSlice'
 import customerReducer from './features/customer/customerSlice'
 import interactionReducer from './features/interaction/interactionSlice'
+import adminReducer from './features/admin/adminSlice'
 
 export const makeStore = () => {
     return configureStore({
@@ -9,6 +10,7 @@ export const makeStore = () => {
             user: userReducer,
             customer: customerReducer,
             interaction: interactionReducer,
+            admin: adminReducer,
         },
     })
 }

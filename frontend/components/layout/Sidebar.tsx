@@ -12,16 +12,19 @@ import {
     HelpCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const navItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Customers', href: '/dashboard/customers', icon: Users },
-    { label: 'Interactions', href: '/dashboard/interactions', icon: Handshake },
-    // { label: 'Users', href: '/dashboard/users', icon: UserCog },
-]
+import { useAppSelector } from '@/lib/redux/hooks'
+import { selectIsAdmin } from '@/lib/redux/features/user/userSlice'
 
 export default function Sidebar() {
     const pathname = usePathname()
+    const isAdmin = useAppSelector(selectIsAdmin)
+
+    const navItems = [
+        { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+        { label: 'Customers', href: '/dashboard/customers', icon: Users },
+        { label: 'Interactions', href: '/dashboard/interactions', icon: Handshake },
+        ...(isAdmin ? [{ label: 'Users', href: '/dashboard/users', icon: UserCog }] : []),
+    ]
 
     return (
         <aside className="flex h-full w-56 flex-col bg-[oklch(0.18_0.06_175)] text-white">

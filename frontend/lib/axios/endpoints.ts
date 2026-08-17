@@ -29,4 +29,8 @@ export const ENDPOINTS = {
     DASHBOARD: {
         ANALYTICS: '/dashboard/analytics',
     },
+    ADMIN: {
+        USER_LIST: '/admin/users',
+        USER_UPDATE_ROLE: (user_id: number) => `/admin/users/${user_id}/role`,
+    },
 } as const
